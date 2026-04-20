@@ -77,6 +77,17 @@
 </head>
 <body>
   <div class="container">
+    <!-- SETUP SCREEN -->
+    <div class="login-box" id="setupBox" style="display:none;">
+      <h1>GitHub Setup</h1>
+      <p>First time? Enter your GitHub credentials</p>
+      <input type="password" id="setupToken" placeholder="GitHub Personal Access Token" style="margin-bottom:1rem;" />
+      <input type="text" id="setupUser" placeholder="GitHub Username" value="shagunvermaamity-boop" style="margin-bottom:1rem;" />
+      <input type="text" id="setupRepo" placeholder="Photo Repo Name" value="shagun-portfolio-photos" style="margin-bottom:1rem;" />
+      <button onclick="saveSetup()">Save Setup</button>
+      <p style="font-size:0.75rem;color:var(--text-light);margin-top:1rem;"><strong>Get token:</strong> <a href="https://github.com/settings/tokens/new?scopes=repo" target="_blank" style="color:var(--gold);">github.com/settings/tokens/new</a></p>
+    </div>
+
     <!-- LOGIN -->
     <div class="login-box" id="loginBox">
       <h1>Admin Panel</h1>
@@ -138,6 +149,12 @@
       const error = document.getElementById('loginError');
       
       if (pass === PASSWORD) {
+        // Check if GitHub token is set
+        if (!GITHUB_TOKEN) {
+          document.getElementById('loginBox').style.display = 'none';
+          document.getElementById('setupBox').style.display = 'block';
+          return;
+        }
         isLoggedIn = true;
         localStorage.setItem('sv_admin_logged_in', 'true');
         document.getElementById('loginBox').style.display = 'none';
@@ -146,6 +163,24 @@
       } else {
         error.textContent = 'Wrong password';
       }
+    }
+
+    function saveSetup() {
+      const token = document.getElementById('setupToken').value;
+      const user = document.getElementById('setupUser').value;
+      const repo = document.getElementById('setupRepo').value;
+      
+      if (!token) {
+        alert('GitHub token is required');
+        return;
+      }
+      
+      localStorage.setItem('github_token', token);
+      localStorage.setItem('github_user', user);
+      localStorage.setItem('github_repo', repo);
+      
+      alert('✓ Setup saved! Reloading...');
+      location.reload();
     }
 
     function logout() {
