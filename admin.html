@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Shagun Verma Portfolio</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: #FAF7F2; color: #1a1a1a; }
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    
+    .login-box { background: #fff; padding: 3rem; border-left: 4px solid #C49A3C; max-width: 400px; }
+    .login-box h1 { font-size: 2rem; color: #1B3A5C; margin-bottom: 0.5rem; font-weight: 300; font-family: 'Cormorant Garamond', serif; }
+    .login-box p { color: #888; margin-bottom: 2rem; font-size: 0.9rem; }
+    .login-box input { width: 100%; padding: 0.8rem; border: 1px solid rgba(27,58,92,0.15); margin-bottom: 1rem; font-size: 0.9rem; }
+    .login-box button { background: #1B3A5C; color: #fff; padding: 0.9rem 2rem; border: none; cursor: pointer; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; width: 100%; }
+    .login-box button:hover { background: #2E5F8A; }
+    .error { color: #c83232; font-size: 0.85rem; margin-bottom: 1rem; }
+    
+    .admin-panel { display: none; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid rgba(196,154,60,0.2); padding-bottom: 1rem; }
+    .admin-header h1 { font-size: 1.8rem; color: #1B3A5C; font-weight: 300; font-family: 'Cormorant Garamond', serif; }
+    .logout-btn { background: #1B3A5C; color: #fff; padding: 0.6rem 1.5rem; border: none; cursor: pointer; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    .logout-btn:hover { background: #2E5F8A; }
+    
+    .upload-zone { border: 2px dashed rgba(196,154,60,0.3); padding: 3rem; text-align: center; cursor: pointer; margin-bottom: 2rem; background: #fff; transition: border-color 0.3s; }
+    .upload-zone:hover { border-color: #C49A3C; }
+    .upload-zone p { font-size: 1.2rem; color: #1B3A5C; margin-bottom: 0.5rem; font-family: 'Cormorant Garamond', serif; font-weight: 300; }
+    .upload-zone small { color: #888; font-size: 0.85rem; }
+    
+    .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 2rem; }
+    .gallery-item { background: #fff; border: 1px solid rgba(27,58,92,0.1); padding: 0; overflow: hidden; position: relative; cursor: grab; }
+    .gallery-item.dragging { opacity: 0.5; }
+    .gallery-item img { width: 100%; height: 200px; object-fit: cover; display: block; }
+    .gallery-item-info { padding: 1rem; }
+    .gallery-item-caption { font-size: 0.85rem; color: #1a1a1a; margin-bottom: 0.8rem; word-break: break-word; min-height: 2.4em; }
+    .gallery-item-buttons { display: flex; flex-direction: column; gap: 0.5rem; }
+    .gallery-btn { border: none; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .btn-edit { background: #1B3A5C; color: #fff; }
+    .btn-edit:hover { background: #2E5F8A; }
+    .btn-delete { background: #c83232; color: #fff; }
+    .btn-delete:hover { background: #a02626; }
+    .btn-save { background: #155724; color: #fff; }
+    .btn-save:hover { background: #0d3818; }
+    
+    .message { padding: 1rem; margin-bottom: 1rem; border-radius: 4px; font-size: 0.85rem; }
+    .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    
+    #fileInput { display: none; }
+    
+    .empty { text-align: center; padding: 2rem; color: #888; }
+    .empty p { font-style: italic; }
+    
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal.open { display: flex; }
+    .modal-content { background: #fff; padding: 2rem; max-width: 400px; width: 90%; border-left: 4px solid #C49A3C; }
+    .modal-content h2 { font-size: 1.3rem; color: #1B3A5C; margin-bottom: 1rem; font-family: 'Cormorant Garamond', serif; font-weight: 300; }
+    .modal-content textarea { width: 100%; padding: 0.8rem; border: 1px solid rgba(27,58,92,0.15); margin-bottom: 1rem; font-size: 0.9rem; font-family: 'DM Sans', sans-serif; min-height: 100px; }
+    .modal-buttons { display: flex; gap: 1rem; }
+    .modal-buttons button { flex: 1; padding: 0.8rem; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .modal-buttons .btn-save { background: #155724; color: #fff; }
+    .modal-buttons .btn-save:hover { background: #0d3818; }
+    .modal-buttons .btn-cancel { background: #888; color: #fff; }
+    .modal-buttons .btn-cancel:hover { background: #666; }
+    
+    .reposition-info { background: #fff3cd; padding: 0.8rem; margin-bottom: 1rem; border-left: 4px solid #ffc107; font-size: 0.85rem; color: #664d03; }
+    
+    @media (max-width: 900px) {
+      .gallery { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .gallery { grid-template-columns: 1fr; }
+      .container { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- LOGIN -->
+    <div class="login-box" id="loginBox">
+      <h1>Admin Panel</h1>
+      <p>Enter password to manage gallery</p>
+      <div id="loginError" class="error"></div>
+      <input type="password" id="passwordInput" placeholder="Password" />
+      <button onclick="login()">Login</button>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div class="admin-panel" id="adminPanel">
+      <div class="admin-header">
+        <h1>Gallery Manager</h1>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+
+      <div id="message"></div>
+
+      <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+        <p>📸 Upload Photos</p>
+        <small>Drag & drop or click to select</small>
+      </div>
+      <input type="file" id="fileInput" multiple accept="image/*" onchange="handleFiles(this.files)" />
+
+      <div class="reposition-info" id="repositionInfo" style="display:none;">
+        📋 Drag photos to reorder them. Click "Save Order" when done.
+      </div>
+
+      <div id="gallery" class="gallery"></div>
+      <div id="empty" class="empty" style="display:none;"><p>No photos yet. Upload some!</p></div>
+    </div>
+  </div>
+
+  <!-- EDIT CAPTION MODAL -->
+  <div class="modal" id="editModal">
+    <div class="modal-content">
+      <h2>Edit Caption</h2>
+      <textarea id="captionInput" placeholder="Enter caption..."></textarea>
+      <div class="modal-buttons">
+        <button class="btn-save" onclick="saveCaptionEdit()">Save</button>
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PASSWORD = 'shagun123';
+    // Get credentials from localStorage (set via setup page or environment)
+    const GITHUB_TOKEN = localStorage.getItem('github_token') || '';
+    const GITHUB_USER = localStorage.getItem('github_user') || 'shagunvermaamity-boop';
+    const GITHUB_REPO = localStorage.getItem('github_repo') || 'shagun-portfolio-photos';
+    let isLoggedIn = false;
+    let galleryData = [];
+    let draggedItem = null;
+    let editingPhoto = null;
+
+    function login() {
+      const pass = document.getElementById('passwordInput').value;
+      const error = document.getElementById('loginError');
+      
+      if (pass === PASSWORD) {
+        isLoggedIn = true;
+        localStorage.setItem('sv_admin_logged_in', 'true');
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        loadGallery();
+      } else {
+        error.textContent = 'Wrong password';
+      }
+    }
+
+    function logout() {
+      isLoggedIn = false;
+      localStorage.removeItem('sv_admin_logged_in');
+      document.getElementById('loginBox').style.display = 'block';
+      document.getElementById('adminPanel').style.display = 'none';
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('loginError').textContent = '';
+    }
+
+    async function loadGallery() {
+      try {
+        const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/`, {
+          headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+        });
+        
+        if (response.ok) {
+          const files = await response.json();
+          const imageFiles = files.filter(f => f.name.match(/\.(jpg|jpeg|png|gif)$/i) && f.name !== '.gitkeep');
+          
+          // Load captions from captions.json if it exists
+          let captionsMap = {};
+          try {
+            const captionsFile = files.find(f => f.name === 'captions.json');
+            if (captionsFile) {
+              const captionsResponse = await fetch(captionsFile.download_url);
+              if (captionsResponse.ok) {
+                captionsMap = await captionsResponse.json();
+              }
+            }
+          } catch (e) {
+            console.log('No captions.json found, using defaults');
+          }
+          
+          galleryData = [];
+          for (let file of imageFiles) {
+            const defaultCaption = file.name.replace(/^photo-\d+-/, '').replace(/\.[^/.]+$/, '').replace(/-/g, ' ');
+            const caption = captionsMap[file.name] || defaultCaption;
+            galleryData.push({
+              id: file.sha,
+              src: file.download_url,
+              caption: caption,
+              name: file.name
+            });
+          }
+          renderGallery();
+        } else {
+          galleryData = [];
+          renderGallery();
+        }
+      } catch (e) {
+        console.error('Load error:', e);
+        galleryData = [];
+        renderGallery();
+      }
+    }
+
+    async function handleFiles(files) {
+      for (let file of files) {
+        showMessage(`Uploading ${file.name}...`, 'success');
+        await uploadToGithub(file);
+      }
+    }
+
+    async function uploadToGithub(file) {
+      try {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          const base64 = e.target.result.split(',')[1];
+          const timestamp = Date.now();
+          const filename = `photo-${timestamp}-${file.name}`;
+          
+          const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${filename}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `token ${GITHUB_TOKEN}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: `Upload: ${file.name}`,
+              content: base64
+            })
+          });
+          
+          if (response.ok) {
+            showMessage(`✓ ${file.name} uploaded! Click "Save Order" to confirm.`, 'success');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            loadGallery();
+          } else {
+            showMessage(`✗ Failed: ${file.name}`, 'error');
+          }
+        };
+        reader.readAsDataURL(file);
+      } catch (e) {
+        console.error('Upload error:', e);
+        showMessage(`✗ Upload failed`, 'error');
+      }
+    }
+
+    function openEditModal(photo) {
+      editingPhoto = photo;
+      document.getElementById('captionInput').value = photo.caption;
+      document.getElementById('editModal').classList.add('open');
+    }
+
+    async function saveCaptionEdit() {
+      if (!editingPhoto) return;
+      
+      const newCaption = document.getElementById('captionInput').value;
+      
+      // Update the caption in editingPhoto
+      editingPhoto.caption = newCaption;
+      
+      // Also update it in galleryData array
+      const photoInGallery = galleryData.find(p => p.name === editingPhoto.name);
+      if (photoInGallery) {
+        photoInGallery.caption = newCaption;
+      }
+      
+      // Save captions to GitHub as JSON
+      await saveCaptionsToGithub();
+      
+      renderGallery();
+      closeModal();
+      showMessage('Caption updated!', 'success');
+    }
+
+    async function saveCaptionsToGithub() {
+      try {
+        let sha = null;
+        let existingCaptions = {};
+        
+        // Get existing captions.json to preserve all captions
+        try {
+          const getResponse = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/captions.json`, {
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+          });
+          if (getResponse.ok) {
+            const data = await getResponse.json();
+            sha = data.sha;
+            // Decode the existing captions
+            try {
+              const existingContent = atob(data.content);
+              existingCaptions = JSON.parse(existingContent);
+              console.log('Loaded existing captions:', existingCaptions);
+            } catch (e) {
+              console.log('Could not parse existing captions');
+            }
+          }
+        } catch (e) {
+          console.log('captions.json not found, starting fresh');
+        }
+        
+        // Update with current gallery data
+        console.log('Current galleryData:', galleryData);
+        galleryData.forEach(photo => {
+          existingCaptions[photo.name] = photo.caption;
+          console.log(`Saving: ${photo.name} => ${photo.caption}`);
+        });
+        
+        const captionsJson = JSON.stringify(existingCaptions, null, 2);
+        console.log('Final captions to save:', captionsJson);
+        
+        const body = {
+          message: 'Update captions',
+          content: btoa(captionsJson)
+        };
+        if (sha) body.sha = sha;
+        
+        const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/captions.json`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+        
+        console.log('Save response status:', response.status);
+        if (!response.ok) {
+          console.error('Failed to save captions:', response.statusText);
+          const errorData = await response.json();
+          console.error('Error details:', errorData);
+        } else {
+          console.log('✓ Captions saved successfully!');
+        }
+      } catch (e) {
+        console.error('Caption save error:', e);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').classList.remove('open');
+      editingPhoto = null;
+    }
+
+    async function deletePhoto(filename) {
+      if (!confirm('Delete this photo?')) return;
+      
+      try {
+        const getResponse = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${filename}`, {
+          headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+        });
+        
+        if (!getResponse.ok) return;
+        
+        const data = await getResponse.json();
+        
+        const deleteResponse = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${filename}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: 'Delete photo',
+            sha: data.sha
+          })
+        });
+        
+        if (deleteResponse.ok) {
+          showMessage('Photo deleted', 'success');
+          loadGallery();
+        }
+      } catch (e) {
+        console.error('Delete error:', e);
+      }
+    }
+
+    function renderGallery() {
+      const gallery = document.getElementById('gallery');
+      const empty = document.getElementById('empty');
+      const repositionInfo = document.getElementById('repositionInfo');
+      
+      if (!galleryData || galleryData.length === 0) {
+        gallery.innerHTML = '';
+        empty.style.display = 'block';
+        repositionInfo.style.display = 'none';
+        return;
+      }
+      
+      empty.style.display = 'none';
+      repositionInfo.style.display = 'block';
+      
+      gallery.innerHTML = galleryData.map((photo, idx) => `
+        <div class="gallery-item" draggable="true" ondragstart="dragStart(event, ${idx})" ondragover="dragOver(event)" ondrop="drop(event, ${idx})" ondragend="dragEnd()">
+          <img src="${photo.src}?raw=true" alt="${photo.caption}" loading="lazy" />
+          <div class="gallery-item-info">
+            <div class="gallery-item-caption">${photo.caption || '(no caption)'}</div>
+            <div class="gallery-item-buttons">
+              <button class="gallery-btn btn-edit" onclick="openEditModal({caption: '${photo.caption.replace(/'/g, "\\'")}', name: '${photo.name}'})">✏️ Edit Caption</button>
+              <button class="gallery-btn btn-delete" onclick="deletePhoto('${photo.name}')">🗑️ Delete</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function dragStart(e, idx) {
+      draggedItem = idx;
+      e.target.closest('.gallery-item').classList.add('dragging');
+    }
+
+    function dragOver(e) {
+      e.preventDefault();
+    }
+
+    function drop(e, targetIdx) {
+      e.preventDefault();
+      if (draggedItem !== null && draggedItem !== targetIdx) {
+        const temp = galleryData[draggedItem];
+        galleryData.splice(draggedItem, 1);
+        galleryData.splice(targetIdx, 0, temp);
+        renderGallery();
+      }
+    }
+
+    function dragEnd() {
+      document.querySelectorAll('.gallery-item').forEach(el => el.classList.remove('dragging'));
+      draggedItem = null;
+    }
+
+    function showMessage(text, type) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = `message ${type}`;
+      setTimeout(() => { msg.textContent = ''; msg.className = ''; }, 4000);
+    }
+
+    // Check if already logged in
+    window.addEventListener('load', function() {
+      if (localStorage.getItem('sv_admin_logged_in') === 'true') {
+        isLoggedIn = true;
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        loadGallery();
+      }
+    });
+
+    // Drag and drop files
+    document.addEventListener('dragover', e => e.preventDefault());
+    document.addEventListener('drop', e => {
+      e.preventDefault();
+      if (isLoggedIn) handleFiles(e.dataTransfer.files);
+    });
+
+    // Close modal on click outside
+    document.getElementById('editModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+  </script>
+</body>
+</html>
